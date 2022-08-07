@@ -23,7 +23,7 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp2
         readonly static Type _objectType = typeof(object);
 
         public static long Serialize<T>(T value, IBufferWriter<byte> writer)
-            => Formatter<T>.Builder(value, writer);
+            => Formatter<T>.Serialize(value, writer);
 
         public static Func<object, IBufferWriter<byte>, long> GenerateFormatter(this PropertyInfo propertyInfo)
         {

@@ -36,9 +36,11 @@ namespace MetaPropertyBenchmark
         [GlobalSetup]
         public void Setup()
         {
-
             //_builderRef.Compile(typeof(User));
+            //_builderRefOp.Compile(typeof(User));
             //_builderExp.Compile(typeof(User));
+            //_builderExpOp.Compile(typeof(User));
+            //_builderExpOp2.Compile<User>();
 
             Randomizer.Seed = new Random(8675309);
 

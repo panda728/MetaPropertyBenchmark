@@ -6,7 +6,7 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
 {
     public class FormatterHelper
     {
-        public FormatterHelper(Type t, PropertyInfo p, int i)
+        public FormatterHelper(PropertyInfo p, int i)
         {
             Name = p.Name;
             Formatter = p.GenerateFormatter();
