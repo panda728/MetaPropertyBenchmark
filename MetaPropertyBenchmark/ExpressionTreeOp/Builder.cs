@@ -20,8 +20,8 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
 
         readonly ConcurrentDictionary<Type, FormatterHelper[]> _dic = new();
         
-        public void Compile(Type t) => GetPropertiesChace(t);
-        FormatterHelper[] GetPropertiesChace(Type t)
+        public void Compile(Type t) => GetPropertiesCache(t);
+        FormatterHelper[] GetPropertiesCache(Type t)
             => _dic.GetOrAdd(t, key
                 => t.GetProperties(BindingFlags.Instance | BindingFlags.Public)
                     .AsParallel()
@@ -32,7 +32,7 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
 
         public void Run<T>(Stream stream, IEnumerable<T> rows)
         {
-            var properties = GetPropertiesChace(typeof(T)).AsSpan();
+            var properties = GetPropertiesCache(typeof(T)).AsSpan();
             using var writer = new ArrayPoolBufferWriter();
 
             WriteLine("<body>", writer);

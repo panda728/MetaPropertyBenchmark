@@ -18,8 +18,8 @@ namespace MetaPropertyBenchmark.ReflectionOp
 
         readonly ConcurrentDictionary<Type, PropCache[]> _dic = new();
 
-        public void Compile(Type t) => GetPropertiesChace(t);
-        PropCache[] GetPropertiesChace(Type t)
+        public void Compile(Type t) => GetPropertiesCache(t);
+        PropCache[] GetPropertiesCache(Type t)
             => _dic.GetOrAdd(t, key
                 => t.GetProperties(BindingFlags.Instance | BindingFlags.Public)
                     .AsParallel()
@@ -30,7 +30,7 @@ namespace MetaPropertyBenchmark.ReflectionOp
 
         public void Run<T>(Stream stream, IEnumerable<T> rows)
         {
-            var properties = GetPropertiesChace(typeof(T)).AsSpan();
+            var properties = GetPropertiesCache(typeof(T)).AsSpan();
             using var writer = new ArrayPoolBufferWriter();
             WriteLine("<body>", writer);
             writer.CopyTo(stream);
