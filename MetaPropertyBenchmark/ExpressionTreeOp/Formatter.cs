@@ -11,14 +11,14 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
 
         public static long Serialize(string value, IBufferWriter<byte> writer)
         {
-            if (string.IsNullOrEmpty(value)) WriteEmptyCoulumn(writer);
+            if (string.IsNullOrEmpty(value)) WriteEmpty(writer);
             writer.Write(_colStart);
-            Encoding.ASCII.GetBytes(value, writer);
+            Encoding.UTF8.GetBytes(value, writer);
             writer.Write(_colEnd);
             return value.Length;
         }
 
-        public static long WriteEmptyCoulumn(IBufferWriter<byte> writer)
+        public static long WriteEmpty(IBufferWriter<byte> writer)
         {
             writer.Write(_emptyColumn);
             return 0;
@@ -26,7 +26,7 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
 
         public static long Serialize(object value, IBufferWriter<byte> writer)
             => value == null 
-                ? WriteEmptyCoulumn(writer)
+                ? WriteEmpty(writer)
                 : Serialize(value?.ToString() ?? "", writer);
 
         public static long Serialize(Guid value, IBufferWriter<byte> writer)
@@ -66,7 +66,7 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
 
         public static long Serialize(bool? value, IBufferWriter<byte> writer)
         {
-            if (value == null) return WriteEmptyCoulumn(writer);
+            if (value == null) return WriteEmpty(writer);
             writer.Write(_colStart);
             var s = $"{value}";
             _ = Encoding.UTF8.GetBytes(s, writer);

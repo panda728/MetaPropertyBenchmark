@@ -9,6 +9,7 @@ test.Reflection();
 test.ReflectionOp();
 test.ExpressionTree();
 test.ExpressionTreeOp();
+test.ExpressionTreeOp2();
 
 #else
 var summary = BenchmarkRunner.Run<Benchmark>();

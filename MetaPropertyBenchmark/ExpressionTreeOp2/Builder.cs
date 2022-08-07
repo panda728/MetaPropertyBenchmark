@@ -1,14 +1,15 @@
 ﻿using System.Buffers;
 using System.Collections.Concurrent;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
-namespace MetaPropertyBenchmark.Reflection
+namespace MetaPropertyBenchmark.ExpressionTreeOp2
 {
     /// <summary>
     /// IEnumerable<T>からXML形式のファイルを出力
     /// </summary>
-    /// <remarks>リフレクションでTのプロパティのGetterとSetterを作成</remarks>
+    /// <remarks>EpressionTreeでプロパティをobjectに変換せずに処理</remarks>
     public class Builder 
     {
         readonly byte[] _newLine = Encoding.UTF8.GetBytes(Environment.NewLine);
@@ -17,14 +18,14 @@ namespace MetaPropertyBenchmark.Reflection
         readonly byte[] _columnTag1 = Encoding.UTF8.GetBytes("<c>");
         readonly byte[] _columnTag2 = Encoding.UTF8.GetBytes("</c>");
 
-        readonly ConcurrentDictionary<Type, PropCache[]> _dic = new();
-
+        readonly ConcurrentDictionary<Type, FormatterHelper[]> _dic = new();
+        
         public void Compile(Type t) => GetPropertiesChace(t);
-        PropCache[] GetPropertiesChace(Type t)
+        FormatterHelper[] GetPropertiesChace(Type t)
             => _dic.GetOrAdd(t, key
                 => t.GetProperties(BindingFlags.Instance | BindingFlags.Public)
                     .AsParallel()
-                    .Select((x, i) => new PropCache(x, i))
+                    .Select((p, i) => new FormatterHelper(p, i))
                     .OrderBy(p => p.Index)
                     .ToArray()
             );
@@ -33,6 +34,7 @@ namespace MetaPropertyBenchmark.Reflection
         {
             var properties = GetPropertiesChace(typeof(T)).AsSpan();
             using var writer = new ArrayPoolBufferWriter();
+
             WriteLine("<body>", writer);
             writer.CopyTo(stream);
             foreach (var row in rows)
@@ -40,7 +42,7 @@ namespace MetaPropertyBenchmark.Reflection
                 Write(_rowTag1, writer);
                 foreach (var p in properties)
                 {
-                    WriteColumn(p.Accessor.GetValue(row), writer);
+                    p.Formatter(row, writer);
                     writer.CopyTo(stream);
                 }
 
@@ -50,7 +52,6 @@ namespace MetaPropertyBenchmark.Reflection
             WriteLine("</body>", writer);
             writer.CopyTo(stream);
         }
-
         void WriteLine(ReadOnlySpan<char> chars, IBufferWriter<byte> writer)
         {
             Encoding.UTF8.GetBytes(chars, writer);
@@ -65,27 +66,6 @@ namespace MetaPropertyBenchmark.Reflection
         {
             writer.Write(bytes);
             writer.Write(_newLine);
-        }
-
-        void WriteColumn(object? value, IBufferWriter<byte> writer)
-        {
-            writer.Write(_columnTag1);
-            Encoding.UTF8.GetBytes(value?.ToString() ?? "", writer);
-            writer.Write(_columnTag2);
-        }
-
-        internal class PropCache
-        {
-            public PropCache(PropertyInfo p, int index)
-            {
-                Name = p.Name;
-                Accessor = p.GetAccessor();
-                Index = index;
-            }
-
-            public string Name { get; init; }
-            public IAccessor Accessor { get; init; }
-            public int Index { get; set; }
         }
     }
 }

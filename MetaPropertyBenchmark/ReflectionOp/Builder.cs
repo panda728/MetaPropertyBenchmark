@@ -79,13 +79,11 @@ namespace MetaPropertyBenchmark.ReflectionOp
             {
                 Name = p.Name;
                 Accessor = p.GetAccessor();
-                Length = index;
                 Index = index;
             }
 
             public string Name { get; init; }
             public IAccessor Accessor { get; init; }
-            public int Length { get; set; }
             public int Index { get; set; }
         }
     }
