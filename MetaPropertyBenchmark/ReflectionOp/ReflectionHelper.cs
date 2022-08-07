@@ -21,7 +21,7 @@ namespace MetaPropertyBenchmark.ReflectionOp
 
         public object? GetValue(object target)
         {
-            if (Getter == null)
+            if (Getter == null || typeof(TProperty).IsGenericType)
                 return null;
             return Getter((TTarget)target);
         }

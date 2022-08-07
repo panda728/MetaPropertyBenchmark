@@ -3,7 +3,7 @@ using System.Text;
 
 namespace MetaPropertyBenchmark.ExpressionTreeOp
 {
-    public static class ColumnFormatter
+    public static class Formatter
     {
         static readonly byte[] _emptyColumn = Encoding.UTF8.GetBytes("<c></c>");
         static readonly byte[] _colStart = Encoding.UTF8.GetBytes("<c>");
@@ -23,14 +23,9 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
             writer.Write(_emptyColumn);
             return 0;
         }
-        public static long WriteEmptyCoulumn(object value, IBufferWriter<byte> writer)
-        {
-            writer.Write(_emptyColumn);
-            return 0;
-        }
 
         public static long Serialize(object value, IBufferWriter<byte> writer)
-            => value == null
+            => value == null 
                 ? WriteEmptyCoulumn(writer)
                 : Serialize(value?.ToString() ?? "", writer);
 
@@ -50,15 +45,15 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
 
         #region number
         public static long Serialize(int value, IBufferWriter<byte> writer)
-            => WriterNumber($"{value}".AsSpan(), writer);
+            => WriterNumber($"{value}", writer);
         public static long Serialize(long value, IBufferWriter<byte> writer)
-            => WriterNumber($"{value}".AsSpan(), writer);
+            => WriterNumber($"{value}", writer);
         public static long Serialize(float value, IBufferWriter<byte> writer)
-            => WriterNumber($"{value}".AsSpan(), writer);
+            => WriterNumber($"{value}", writer);
         public static long Serialize(double value, IBufferWriter<byte> writer)
-            => WriterNumber($"{value}".AsSpan(), writer);
+            => WriterNumber($"{value}", writer);
         public static long Serialize(decimal value, IBufferWriter<byte> writer)
-            => WriterNumber($"{value}".AsSpan(), writer);
+            => WriterNumber($"{value}", writer);
 
         static long WriterNumber(ReadOnlySpan<char> chars, IBufferWriter<byte> writer)
         {

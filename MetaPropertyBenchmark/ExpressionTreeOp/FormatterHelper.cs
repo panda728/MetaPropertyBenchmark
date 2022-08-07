@@ -9,7 +9,7 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
         public FormatterHelper(Type t, PropertyInfo p, int i)
         {
             Name = p.Name;
-            Formatter = FormatterHelperExtention.GenerateEncodedGetterLambda(p);
+            Formatter = p.GenerateFormatter();
             MaxLength = 0;
             Index = i;
         }
@@ -24,10 +24,10 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
     {
         readonly static Type _objectType = typeof(object);
 
-        public static Func<object, IBufferWriter<byte>, long> GenerateEncodedGetterLambda(PropertyInfo p)
+        public static Func<object, IBufferWriter<byte>, long> GenerateFormatter(this PropertyInfo p)
             => IsSupported(p.PropertyType)
-                ? p.GeneratePrimitiveLambda()
-                : p.GenerateObjectLambda();
+                ? p.GeneratePrimitive()
+                : p.GenerateObject();
 
         static bool IsSupported(Type t)
         {
@@ -40,37 +40,45 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
             return false;
         }
 
-        static Func<object, IBufferWriter<byte>, long> GeneratePrimitiveLambda(this PropertyInfo propertyInfo)
+        static Func<object, IBufferWriter<byte>, long> GeneratePrimitive(this PropertyInfo propertyInfo)
         {
+            if (propertyInfo.PropertyType.IsGenericType)
+                return (o, v) => Formatter.WriteEmptyCoulumn(v);
+
+            // Func<object, long> getCategoryId = (i,writer) => Formatter.Serialize((i as T).CategoryId, writer);
             var instanceObj = Expression.Parameter(_objectType, "i");
             var instance = Expression.Convert(instanceObj, propertyInfo.DeclaringType);
             var writer = Expression.Parameter(typeof(IBufferWriter<byte>), "writer");
             var property = Expression.Property(instance, propertyInfo);
             var ps = new Expression[] { property, writer };
-            var method = typeof(ColumnFormatter).GetMethod("Serialize", new Type[] { propertyInfo.PropertyType, typeof(IBufferWriter<byte>) });
+            var method = typeof(Formatter).GetMethod("Serialize", new Type[] { propertyInfo.PropertyType, typeof(IBufferWriter<byte>) });
             if (method == null)
-                return (o, v) => ColumnFormatter.WriteEmptyCoulumn(o, v);
+                return (o, v) => Formatter.WriteEmptyCoulumn(v);
 
             var call = Expression.Call(method, ps);
-            var d = Expression.Lambda(call, instanceObj, writer).Compile();
-            return (Func<object, IBufferWriter<byte>, long>)d;
+            var lambda = Expression.Lambda(call, instanceObj, writer);
+            return (Func<object, IBufferWriter<byte>, long>)lambda.Compile();
         }
 
-        static Func<object, IBufferWriter<byte>, long> GenerateObjectLambda(this PropertyInfo propertyInfo)
+        static Func<object, IBufferWriter<byte>, long> GenerateObject(this PropertyInfo propertyInfo)
         {
+            if (propertyInfo.PropertyType.IsGenericType)
+                return (o, v) => Formatter.WriteEmptyCoulumn(v);
+
+            // Func<object, long> getCategoryId = (i,writer) => Formatter.Serialize((object)((i as T).CategoryId), writer);
             var instanceObj = Expression.Parameter(_objectType, "i");
             var instance = Expression.Convert(instanceObj, propertyInfo.DeclaringType);
             var writer = Expression.Parameter(typeof(IBufferWriter<byte>), "writer");
             var property = Expression.Property(instance, propertyInfo);
             var propertyObject = Expression.Convert(property, _objectType);
             var ps = new Expression[] { propertyObject, writer };
-            var method = typeof(ColumnFormatter).GetMethod("Serialize", new Type[] { _objectType, typeof(IBufferWriter<byte>) });
+            var method = typeof(Formatter).GetMethod("Serialize", new Type[] { _objectType, typeof(IBufferWriter<byte>) });
             if (method == null)
-                return (o, v) => ColumnFormatter.WriteEmptyCoulumn(o, v);
+                return (o, v) => Formatter.WriteEmptyCoulumn(v);
 
             var call = Expression.Call(method, ps);
-            var d = Expression.Lambda(call, instanceObj, writer).Compile();
-            return (Func<object, IBufferWriter<byte>, long>)d;
+            var lambda = Expression.Lambda(call, instanceObj, writer);
+            return (Func<object, IBufferWriter<byte>, long>)lambda.Compile();
         }
     }
 }

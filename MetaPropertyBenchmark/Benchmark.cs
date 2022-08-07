@@ -21,7 +21,6 @@ namespace MetaPropertyBenchmark
         readonly MetaPropertyBenchmark.ReflectionOp.Builder _builderRefOp = new();
         readonly MetaPropertyBenchmark.ExpressionTree.Builder _builderExp = new();
         readonly MetaPropertyBenchmark.ExpressionTreeOp.Builder _builderExpOp = new();
-        readonly MetaPropertyBenchmark.ExpressionTreeOp2.Builder _builderExpOp2 = new();
 
         public Benchmark()
         {
@@ -31,7 +30,7 @@ namespace MetaPropertyBenchmark
         }
 
         [Params(1000, 100000)]
-        public int N = 10;
+        public int N;
 
         [GlobalSetup]
         public void Setup()
@@ -118,15 +117,6 @@ namespace MetaPropertyBenchmark
 
             using var stream = CreateStream(Path.Combine(_workPath, "ExpressionTreeOp.txt"));
             _builderExpOp.Run(stream, _users);
-        }
-        [Benchmark]
-        public void ExpressionTreeOp2()
-        {
-            if (_users == null)
-                throw new ApplicationException("users is null");
-
-            using var stream = CreateStream(Path.Combine(_workPath, "ExpressionTreeOp2.txt"));
-            _builderExpOp2.Run(stream, _users);
         }
     }
 }

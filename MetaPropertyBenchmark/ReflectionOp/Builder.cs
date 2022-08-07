@@ -4,8 +4,11 @@ using System.Reflection;
 using System.Text;
 
 namespace MetaPropertyBenchmark.ReflectionOp
-{
-    public class Builder : IDisposable
+{    /// <summary>
+     /// IEnumerable<T>からXML形式のファイルを出力
+     /// </summary>
+     /// <remarks>Setterを作成しない</remarks>
+    public class Builder
     {
         readonly byte[] _newLine = Encoding.UTF8.GetBytes(Environment.NewLine);
         readonly byte[] _rowTag1 = Encoding.UTF8.GetBytes("<r>");
@@ -14,12 +17,6 @@ namespace MetaPropertyBenchmark.ReflectionOp
         readonly byte[] _columnTag2 = Encoding.UTF8.GetBytes("</c>");
 
         readonly ConcurrentDictionary<Type, PropCache[]> _dic = new();
-        readonly ArrayPoolBufferWriter _writer = new();
-
-        public void Dispose()
-        {
-            _writer.Dispose();
-        }
 
         public void Compile(Type t) => GetPropertiesChace(t);
         PropCache[] GetPropertiesChace(Type t)
@@ -34,61 +31,47 @@ namespace MetaPropertyBenchmark.ReflectionOp
         public void Run<T>(Stream stream, IEnumerable<T> rows)
         {
             var properties = GetPropertiesChace(typeof(T)).AsSpan();
-
-            WriteLine("<body>", stream);
+            using var writer = new ArrayPoolBufferWriter();
+            WriteLine("<body>", writer);
+            writer.CopyTo(stream);
             foreach (var row in rows)
             {
-                Write(_rowTag1, stream);
+                Write(_rowTag1, writer);
                 foreach (var p in properties)
                 {
-                    WriteColumn(p.Accessor.GetValue(row), stream);
+                    WriteColumn(p.Accessor.GetValue(row), writer);
+                    writer.CopyTo(stream);
                 }
-                WriteLine(_rowTag2, stream);
+                WriteLine(_rowTag2, writer);
+                writer.CopyTo(stream);
             }
-            WriteLine("</body>", stream);
+            WriteLine("</body>", writer);
+            writer.CopyTo(stream);
         }
 
-        void Write(ReadOnlySpan<char> chars, Stream stream)
+        void WriteLine(ReadOnlySpan<char> chars, IBufferWriter<byte> writer)
         {
-            Encoding.UTF8.GetBytes(chars, _writer);
-            _writer.CopyTo(stream);
+            Encoding.UTF8.GetBytes(chars, writer);
+            writer.Write(_newLine);
+        }
+        void Write(byte[] bytes, IBufferWriter<byte> writer)
+        {
+            writer.Write(bytes);
         }
 
-        void WriteLine(ReadOnlySpan<char> chars, Stream stream)
+        void WriteLine(byte[] bytes, IBufferWriter<byte> writer)
         {
-            Encoding.UTF8.GetBytes(chars, _writer);
-            _writer.Write(_newLine);
-            _writer.CopyTo(stream);
-        }
-        void Write(byte[] bytes, Stream stream)
-        {
-            stream.Write(bytes);
+            writer.Write(bytes);
+            writer.Write(_newLine);
         }
 
-        void WriteLine(byte[] bytes, Stream stream)
+        void WriteColumn(object? value, IBufferWriter<byte> writer)
         {
-            stream.Write(bytes);
-            stream.Write(_newLine);
-        }
-        void WriteLine(ReadOnlySpan<byte> bytes, Stream stream)
-        {
-            _writer.Write(bytes);
-            _writer.Write(_newLine);
-            _writer.CopyTo(stream);
+            writer.Write(_columnTag1);
+            Encoding.UTF8.GetBytes(value?.ToString() ?? "", writer);
+            writer.Write(_columnTag2);
         }
 
-        void WriteLine(Stream stream)
-        {
-            stream.Write(_newLine);
-        }
-
-        void WriteColumn(object? value, Stream stream)
-        {
-            _writer.Write(_columnTag1);
-            Encoding.UTF8.GetBytes(value?.ToString() ?? "", _writer);
-            _writer.Write(_columnTag2);
-            _writer.CopyTo(stream);
-        }
 
         internal class PropCache
         {

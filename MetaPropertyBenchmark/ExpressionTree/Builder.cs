@@ -6,6 +6,10 @@ using System.Text;
 
 namespace MetaPropertyBenchmark.ExpressionTree
 {
+    /// <summary>
+    /// IEnumerable<T>からXML形式のファイルを出力
+    /// </summary>
+    /// <remarks>EpressionTreeでプロパティにアクセス</remarks>
     public class Builder : IDisposable
     {
         readonly byte[] _newLine = Encoding.UTF8.GetBytes(Environment.NewLine);
@@ -15,11 +19,11 @@ namespace MetaPropertyBenchmark.ExpressionTree
         readonly byte[] _columnTag2 = Encoding.UTF8.GetBytes("</c>");
 
         readonly ConcurrentDictionary<Type, PropCache[]> _dic = new();
-        readonly ArrayPoolBufferWriter _writer = new();
+        readonly ArrayPoolBufferWriter writer = new();
 
         public void Dispose()
         {
-            _writer.Dispose();
+            writer.Dispose();
         }
 
         public void Compile(Type t) => GetPropertiesChace(t);
@@ -35,62 +39,54 @@ namespace MetaPropertyBenchmark.ExpressionTree
         public void Run<T>(Stream stream, IEnumerable<T> rows)
         {
             var properties = GetPropertiesChace(typeof(T)).AsSpan();
+            using var writer = new ArrayPoolBufferWriter();
 
-            WriteLine("<body>", stream);
+            WriteLine("<body>", writer);
+            writer.CopyTo(stream);
             foreach (var row in rows)
             {
-                Write(_rowTag1, stream);
+                Write(_rowTag1, writer);
                 foreach (var p in properties)
                 {
-                    WriteColumn(p.Getter(row), stream);
+                    if (p.Getter == null)
+                        WriteColumnEmpty(writer);
+                    else
+                        WriteColumn(p.Getter(row), writer);
+                    writer.CopyTo(stream);
                 }
 
-                WriteLine(_rowTag2, stream);
+                WriteLine(_rowTag2, writer);
+                writer.CopyTo(stream);
             }
-            WriteLine("</body>", stream);
+            WriteLine("</body>", writer);
+            writer.CopyTo(stream);
+        }
+        void WriteLine(ReadOnlySpan<char> chars, IBufferWriter<byte> writer)
+        {
+            Encoding.UTF8.GetBytes(chars, writer);
+            writer.Write(_newLine);
+        }
+        void Write(byte[] bytes, IBufferWriter<byte> writer)
+        {
+            writer.Write(bytes);
         }
 
-        void Write(ReadOnlySpan<char> chars, Stream stream)
+        void WriteLine(byte[] bytes, IBufferWriter<byte> writer)
         {
-            Encoding.UTF8.GetBytes(chars, _writer);
-            _writer.CopyTo(stream);
+            writer.Write(bytes);
+            writer.Write(_newLine);
         }
 
-        void WriteLine(ReadOnlySpan<char> chars, Stream stream)
+        void WriteColumn(object? value, IBufferWriter<byte> writer)
         {
-            Encoding.UTF8.GetBytes(chars, _writer);
-            _writer.Write(_newLine);
-            _writer.CopyTo(stream);
+            writer.Write(_columnTag1);
+            Encoding.UTF8.GetBytes(value?.ToString() ?? "", writer);
+            writer.Write(_columnTag2);
         }
-        void Write(byte[] bytes, Stream stream)
+        void WriteColumnEmpty(IBufferWriter<byte> writer)
         {
-            stream.Write(bytes);
-        }
-
-        void WriteLine(byte[] bytes, Stream stream)
-        {
-            stream.Write(bytes);
-            stream.Write(_newLine);
-        }
-        void WriteLine(ReadOnlySpan<byte> bytes, Stream stream)
-        {
-            _writer.Write(bytes);
-            _writer.Write(_newLine);
-            _writer.CopyTo(stream);
-        }
-
-        void WriteLine(Stream stream)
-        {
-            stream.Write(_newLine);
-        }
-
-        void WriteColumn(object? value, Stream stream)
-        {
-            _writer.Write(_columnTag1);
-            Encoding.UTF8.GetBytes(value?.ToString() ?? "", _writer);
-            _writer.Write(_columnTag2);
-            _writer.Write(_newLine);
-            _writer.CopyTo(stream);
+            writer.Write(_columnTag1);
+            writer.Write(_columnTag2);
         }
 
         internal class PropCache
@@ -98,18 +94,28 @@ namespace MetaPropertyBenchmark.ExpressionTree
             public PropCache(PropertyInfo p, int index)
             {
                 Name = p.Name;
+                Getter = GenerateLamda(p);
+                Index = index;
+            }
+
+            Func<object, object> GenerateLamda(PropertyInfo p)
+            {
+                if (p.PropertyType.IsGenericType)
+                    return null;
+
                 var target = Expression.Parameter(typeof(object), p.Name);
                 var instance = Expression.Convert(target, p.DeclaringType);
                 var property = Expression.PropertyOrField(instance, p.Name);
                 var propertyObj = Expression.Convert(property, typeof(object));
                 var lambda = Expression.Lambda<Func<object, object>>(propertyObj, target);
-                Getter = lambda.Compile();
-                Index = index;
+                return lambda.Compile();
             }
 
             public string Name { get; init; }
             public Func<object, object> Getter { get; init; }
             public int Index { get; set; }
         }
+
+
     }
 }
