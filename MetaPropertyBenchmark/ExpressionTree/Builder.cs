@@ -7,10 +7,10 @@ using System.Text;
 namespace MetaPropertyBenchmark.ExpressionTree
 {
     /// <summary>
-    /// IEnumerable<T>からXML形式のファイルを出力
+    /// IEnumerable<T>からXML風のファイルを出力
     /// </summary>
-    /// <remarks>EpressionTreeでプロパティにアクセス</remarks>
-    public class Builder : IDisposable
+    /// <remarks>標準的なEpressionTree操作</remarks>
+    public class Builder
     {
         readonly byte[] _newLine = Encoding.UTF8.GetBytes(Environment.NewLine);
         readonly byte[] _rowTag1 = Encoding.UTF8.GetBytes("<r>");
@@ -18,27 +18,25 @@ namespace MetaPropertyBenchmark.ExpressionTree
         readonly byte[] _columnTag1 = Encoding.UTF8.GetBytes("<c>");
         readonly byte[] _columnTag2 = Encoding.UTF8.GetBytes("</c>");
 
-        readonly ConcurrentDictionary<Type, PropCache[]> _dic = new();
-        readonly ArrayPoolBufferWriter writer = new();
+        public void Compile<T>() => _ = GetPropertiesCache<T>.Properties;
 
-        public void Dispose()
+        private static class GetPropertiesCache<T>
         {
-            writer.Dispose();
-        }
-
-        public void Compile(Type t) => GetPropertiesCache(t);
-        PropCache[] GetPropertiesCache(Type t)
-            => _dic.GetOrAdd(t, key
-                => t.GetProperties(BindingFlags.Instance | BindingFlags.Public)
+            static GetPropertiesCache()
+            {
+                Properties = typeof(T)
+                    .GetProperties(BindingFlags.Instance | BindingFlags.Public)
                     .AsParallel()
-                    .Select((x, i) => new PropCache(x, i))
+                    .Select((p, i) => new PropCache(p, i))
                     .OrderBy(p => p.Index)
-                    .ToArray()
-            );
+                    .ToArray();
+            }
+            public static readonly PropCache[] Properties;
+        }
 
         public void Run<T>(Stream stream, IEnumerable<T> rows)
         {
-            var properties = GetPropertiesCache(typeof(T)).AsSpan();
+            var properties = GetPropertiesCache<T>.Properties.AsSpan();
             using var writer = new ArrayPoolBufferWriter();
 
             WriteLine("<body>", writer);

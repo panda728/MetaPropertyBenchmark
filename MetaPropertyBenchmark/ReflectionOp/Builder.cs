@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MetaPropertyBenchmark.ReflectionOp
 {    /// <summary>
-     /// IEnumerable<T>からXML形式のファイルを出力
+     /// IEnumerable<T>からXML風のファイルを出力
      /// </summary>
      /// <remarks>Setterを作成しない</remarks>
     public class Builder

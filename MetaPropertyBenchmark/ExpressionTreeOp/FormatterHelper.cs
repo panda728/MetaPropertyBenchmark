@@ -23,26 +23,14 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
         readonly static Type _objectType = typeof(object);
 
         public static Func<object, IBufferWriter<byte>, long> GenerateFormatter(this PropertyInfo p)
-            => IsSupported(p.PropertyType)
+            => p.PropertyType.IsPrimitive 
                 ? p.GeneratePrimitive()
                 : p.GenerateObject();
-
-        static bool IsSupported(Type t)
-        {
-            if (t == typeof(string) || t == typeof(Guid) || t == typeof(Enum))
-                return true;
-            else if (t == typeof(int) || t == typeof(long) || t == typeof(decimal) || t == typeof(double) || t == typeof(float))
-                return true;
-            else if (t == typeof(DateTime) || t == typeof(DateOnly) || t == typeof(TimeOnly) || t == _objectType)
-                return true;
-            return false;
-        }
-
+        
         static Func<object, IBufferWriter<byte>, long> GeneratePrimitive(this PropertyInfo propertyInfo)
         {
             if (propertyInfo.PropertyType.IsGenericType)
                 return (o, v) => Formatter.WriteEmpty(v);
-
             // Func<object, long> getCategoryId = (i,writer) => Formatter.Serialize((i as T).CategoryId, writer);
             var instanceObj = Expression.Parameter(_objectType, "i");
             var instance = Expression.Convert(instanceObj, propertyInfo.DeclaringType);

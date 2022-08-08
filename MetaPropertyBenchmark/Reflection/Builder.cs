@@ -6,9 +6,9 @@ using System.Text;
 namespace MetaPropertyBenchmark.Reflection
 {
     /// <summary>
-    /// IEnumerable<T>からXML形式のファイルを出力
+    /// IEnumerable<T>からXML風のファイルを出力
     /// </summary>
-    /// <remarks>リフレクションでTのプロパティのGetterとSetterを作成</remarks>
+    /// <remarks>標準的なリフレクション操作</remarks>
     public class Builder 
     {
         readonly byte[] _newLine = Encoding.UTF8.GetBytes(Environment.NewLine);

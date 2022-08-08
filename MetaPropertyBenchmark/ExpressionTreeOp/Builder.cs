@@ -7,7 +7,7 @@ using System.Text;
 namespace MetaPropertyBenchmark.ExpressionTreeOp
 {
     /// <summary>
-    /// IEnumerable<T>からXML形式のファイルを出力
+    /// IEnumerable<T>からXML風のファイルを出力
     /// </summary>
     /// <remarks>EpressionTreeでプロパティをobjectに変換せずに処理</remarks>
     public class Builder
