@@ -21,6 +21,8 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp2
     public static class FormatterHelperExtention
     {
         readonly static Type _objectType = typeof(object);
+        readonly static Type _this = typeof(FormatterHelperExtention);
+        readonly static Type _buffer = typeof(IBufferWriter<byte>);
 
         public static long Serialize<T>(T value, IBufferWriter<byte> writer)
             => Formatter<T>.Serialize(value, writer);
@@ -33,9 +35,9 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp2
             var writer = Expression.Parameter(typeof(IBufferWriter<byte>), "writer");
             var property = Expression.Property(instance, propertyInfo);
 
-            var method = typeof(FormatterHelperExtention).GetMethod("Serialize",
+            var method = _this.GetMethod("Serialize",
                 genericParameterCount: 1,
-                types: new Type[] { Type.MakeGenericMethodParameter(0), typeof(IBufferWriter<byte>) });
+                types: new Type[] { Type.MakeGenericMethodParameter(0), _buffer });
             if (method == null)
                 return (o, w) => FormatterExtention.SerializeNone(o, w);
 
