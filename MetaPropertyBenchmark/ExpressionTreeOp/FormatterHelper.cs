@@ -29,9 +29,9 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
 
         static bool IsSupported(Type t)
         {
-            if (t == typeof(string) || t == typeof(Guid) || t == typeof(Enum))
+            if(t.IsPrimitive)
                 return true;
-            else if (t == typeof(int) || t == typeof(long) || t == typeof(decimal) || t == typeof(double) || t == typeof(float))
+            if (t == typeof(string) || t == typeof(Guid) || t == typeof(Enum))
                 return true;
             else if (t == typeof(DateTime) || t == typeof(DateOnly) || t == typeof(TimeOnly) || t == _objectType)
                 return true;
@@ -73,8 +73,8 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
             var property = Expression.PropertyOrField(instance, propertyInfo.Name);
             var propertyConv = Expression.Convert(property, _objectType);
             var writer = Expression.Parameter(typeof(IBufferWriter<byte>), "writer");
-            var ps = new Expression[] { propertyConv, writer };
 
+            var ps = new Expression[] { propertyConv, writer };
             var call = Expression.Call(method, ps);
             var lambda = Expression.Lambda(call, target, writer);
             return (Func<object, IBufferWriter<byte>, long>)lambda.Compile();

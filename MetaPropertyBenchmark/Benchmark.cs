@@ -30,7 +30,7 @@ namespace MetaPropertyBenchmark
                 Directory.CreateDirectory(_workPath);
         }
 
-        [Params(1000, 100000)]
+        [Params(1000)]
         public int N;
 
         [GlobalSetup]
@@ -94,15 +94,15 @@ namespace MetaPropertyBenchmark
             using var stream = CreateStream(Path.Combine(_workPath, "Reflection.txt"));
             _builderRef.Run(stream, _users);
         }
-        [Benchmark]
-        public void ReflectionOp()
-        {
-            if (_users == null)
-                throw new ApplicationException("users is null");
+        //[Benchmark]
+        //public void ReflectionOp()
+        //{
+        //    if (_users == null)
+        //        throw new ApplicationException("users is null");
 
-            using var stream = CreateStream(Path.Combine(_workPath, "ReflectionOp.txt"));
-            _builderRefOp.Run(stream, _users);
-        }
+        //    using var stream = CreateStream(Path.Combine(_workPath, "ReflectionOp.txt"));
+        //    _builderRefOp.Run(stream, _users);
+        //}
         [Benchmark]
         public void ExpressionTree()
         {
@@ -121,14 +121,14 @@ namespace MetaPropertyBenchmark
             using var stream = CreateStream(Path.Combine(_workPath, "ExpressionTreeOp.txt"));
             _builderExpOp.Run(stream, _users);
         }
-        [Benchmark]
-        public void ExpressionTreeOp2()
-        {
-            if (_users == null)
-                throw new ApplicationException("users is null");
+        //[Benchmark]
+        //public void ExpressionTreeOp2()
+        //{
+        //    if (_users == null)
+        //        throw new ApplicationException("users is null");
 
-            using var stream = CreateStream(Path.Combine(_workPath, "ExpressionTreeOp2.txt"));
-            _builderExpOp2.Run(stream, _users);
-        }
+        //    using var stream = CreateStream(Path.Combine(_workPath, "ExpressionTreeOp2.txt"));
+        //    _builderExpOp2.Run(stream, _users);
+        //}
     }
 }

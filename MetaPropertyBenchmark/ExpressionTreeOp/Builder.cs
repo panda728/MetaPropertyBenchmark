@@ -54,6 +54,7 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
             WriteLine("</body>", writer);
             writer.CopyTo(stream);
         }
+
         void WriteLine(ReadOnlySpan<char> chars, IBufferWriter<byte> writer)
         {
             Encoding.UTF8.GetBytes(chars, writer);
