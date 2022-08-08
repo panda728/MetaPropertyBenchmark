@@ -25,11 +25,11 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
                 Properties = typeof(T)
                     .GetProperties(BindingFlags.Instance | BindingFlags.Public)
                     .AsParallel()
-                    .Select((p, i) => new FormatterHelper(p, i))
+                    .Select((p, i) => new FormatterHelper<T>(p, i))
                     .OrderBy(p => p.Index)
                     .ToArray();
             }
-            public static readonly FormatterHelper[] Properties;
+            public static readonly FormatterHelper<T>[] Properties;
         }
 
         public void Run<T>(Stream stream, IEnumerable<T> rows)
@@ -54,6 +54,7 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
             WriteLine("</body>", writer);
             writer.CopyTo(stream);
         }
+
         void WriteLine(ReadOnlySpan<char> chars, IBufferWriter<byte> writer)
         {
             Encoding.UTF8.GetBytes(chars, writer);

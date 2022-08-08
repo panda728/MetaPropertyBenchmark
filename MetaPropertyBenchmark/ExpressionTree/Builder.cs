@@ -59,11 +59,13 @@ namespace MetaPropertyBenchmark.ExpressionTree
             WriteLine("</body>", writer);
             writer.CopyTo(stream);
         }
+        
         void WriteLine(ReadOnlySpan<char> chars, IBufferWriter<byte> writer)
         {
             Encoding.UTF8.GetBytes(chars, writer);
             writer.Write(_newLine);
         }
+        
         void Write(byte[] bytes, IBufferWriter<byte> writer)
         {
             writer.Write(bytes);
@@ -81,6 +83,7 @@ namespace MetaPropertyBenchmark.ExpressionTree
             Encoding.UTF8.GetBytes(value?.ToString() ?? "", writer);
             writer.Write(_columnTag2);
         }
+
         void WriteColumnEmpty(IBufferWriter<byte> writer)
         {
             writer.Write(_columnTag1);
