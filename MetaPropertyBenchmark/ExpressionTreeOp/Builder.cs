@@ -16,21 +16,25 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
         readonly byte[] _rowTag1 = Encoding.UTF8.GetBytes("<r>");
         readonly byte[] _rowTag2 = Encoding.UTF8.GetBytes("</r>");
 
-        readonly ConcurrentDictionary<Type, FormatterHelper[]> _dic = new();
+        public void Compile<T>() => _ = GetPropertiesCache<T>.Properties;
 
-        public void Compile(Type t) => GetPropertiesCache(t);
-        FormatterHelper[] GetPropertiesCache(Type t)
-            => _dic.GetOrAdd(t, key
-                => t.GetProperties(BindingFlags.Instance | BindingFlags.Public)
+        private static class GetPropertiesCache<T>
+        {
+            static GetPropertiesCache()
+            {
+                Properties = typeof(T)
+                    .GetProperties(BindingFlags.Instance | BindingFlags.Public)
                     .AsParallel()
                     .Select((p, i) => new FormatterHelper(p, i))
                     .OrderBy(p => p.Index)
-                    .ToArray()
-            );
+                    .ToArray();
+            }
+            public static readonly FormatterHelper[] Properties;
+        }
 
         public void Run<T>(Stream stream, IEnumerable<T> rows)
         {
-            var properties = GetPropertiesCache(typeof(T)).AsSpan();
+            var properties = GetPropertiesCache<T>.Properties.AsSpan();
             using var writer = new ArrayPoolBufferWriter();
 
             WriteLine("<body>", writer);
