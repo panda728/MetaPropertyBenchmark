@@ -29,11 +29,8 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp2
 
         public static Func<object, IBufferWriter<byte>, long> GenerateFormatter(this PropertyInfo propertyInfo)
         {
-            // Func<object, long> getCategoryId = (i,writer) => FormatterHelperExtention.Serialize<T>((i as T).CategoryId, writer);
-            var instanceObj = Expression.Parameter(_objectType, "i");
-            var instance = Expression.Convert(instanceObj, propertyInfo.DeclaringType);
-            var writer = Expression.Parameter(typeof(IBufferWriter<byte>), "writer");
-            var property = Expression.Property(instance, propertyInfo);
+            if (propertyInfo.PropertyType.IsGenericType)
+                return (o, w) => FormatterExtention.SerializeNone(o, w);
 
             var method = _this.GetMethod("Serialize",
                 genericParameterCount: 1,
@@ -41,10 +38,31 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp2
             if (method == null)
                 return (o, w) => FormatterExtention.SerializeNone(o, w);
 
+            var target = Expression.Parameter(_objectType, "i");
+            var instance = Expression.Convert(target, propertyInfo.DeclaringType);
+            var property = Expression.PropertyOrField(instance, propertyInfo.Name);
+            var writer = Expression.Parameter(typeof(IBufferWriter<byte>), "writer");
             var ps = new Expression[] { property, writer };
             var call = Expression.Call(method.MakeGenericMethod(propertyInfo.PropertyType), ps);
-            var lambda = Expression.Lambda(call, instanceObj, writer);
+            var lambda = Expression.Lambda(call, target, writer);
             return (Func<object, IBufferWriter<byte>, long>)lambda.Compile();
+
+            //// Func<object, long> getCategoryId = (i,writer) => FormatterHelperExtention.Serialize<T>((i as T).CategoryId, writer);
+            //var instanceObj = Expression.Parameter(_objectType, "i");
+            //var instance = Expression.Convert(instanceObj, propertyInfo.DeclaringType);
+            //var writer = Expression.Parameter(typeof(IBufferWriter<byte>), "writer");
+            //var property = Expression.Property(instance, propertyInfo);
+
+            //var method = _this.GetMethod("Serialize",
+            //    genericParameterCount: 1,
+            //    types: new Type[] { Type.MakeGenericMethodParameter(0), _buffer });
+            //if (method == null)
+            //    return (o, w) => FormatterExtention.SerializeNone(o, w);
+
+            //var ps = new Expression[] { property, writer };
+            //var call = Expression.Call(method.MakeGenericMethod(propertyInfo.PropertyType), ps);
+            //var lambda = Expression.Lambda(call, instanceObj, writer);
+            //return (Func<object, IBufferWriter<byte>, long>)lambda.Compile();
         }
     }
 }

@@ -101,7 +101,7 @@ namespace MetaPropertyBenchmark.ExpressionTree
                 if (p.PropertyType.IsGenericType)
                     return null;
 
-                var target = Expression.Parameter(typeof(object), p.Name);
+                var target = Expression.Parameter(typeof(object), "i");
                 var instance = Expression.Convert(target, p.DeclaringType);
                 var property = Expression.PropertyOrField(instance, p.Name);
                 var propertyObj = Expression.Convert(property, typeof(object));
