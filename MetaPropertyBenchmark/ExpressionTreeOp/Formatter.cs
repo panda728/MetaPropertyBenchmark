@@ -15,7 +15,7 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
             return 0;
         }
 
-        static long Write(ReadOnlySpan<char> chars, IBufferWriter<byte> writer)
+        public static long Write(ReadOnlySpan<char> chars, IBufferWriter<byte> writer)
         {
             writer.Write(_colStart);
             _ = Encoding.UTF8.GetBytes(chars, writer);

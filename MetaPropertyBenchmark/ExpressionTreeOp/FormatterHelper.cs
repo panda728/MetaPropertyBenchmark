@@ -23,13 +23,19 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
         readonly static Type _objectType = typeof(object);
 
         public static Func<object, IBufferWriter<byte>, long> GenerateFormatter(this PropertyInfo p)
-            => IsSupported(p.PropertyType)
+        {
+            if (p.PropertyType.IsGenericType)
+                return (o, v) => Formatter.WriteEmpty(v);
+            //if (p.PropertyType == typeof(string))
+            //    return p.GenerateString();
+            return IsSupported(p.PropertyType)
                 ? p.GenerateSupported()
                 : p.GenerateObject();
+        }
 
         static bool IsSupported(Type t)
         {
-            if(t.IsPrimitive)
+            if (t.IsPrimitive)
                 return true;
             if (t == typeof(string) || t == typeof(Guid) || t == typeof(Enum))
                 return true;
@@ -38,11 +44,26 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
             return false;
         }
 
+        //static Func<object, IBufferWriter<byte>, long> GenerateString(this PropertyInfo propertyInfo)
+        //{
+        //    var method = typeof(Formatter).GetMethod("Write", new Type[] { typeof(ReadOnlySpan<char>), typeof(IBufferWriter<byte>) });
+        //    var methodSpan = typeof(MemoryExtensions).GetMethod("AsSpan", new Type[] { typeof(string) });
+        //    if (method == null || methodSpan == null)
+        //        return (o, v) => Formatter.WriteEmpty(v);
+        //    var target = Expression.Parameter(typeof(object), "i");
+        //    var instance = Expression.Convert(target, propertyInfo.DeclaringType);
+        //    var property = Expression.PropertyOrField(instance, propertyInfo.Name);
+        //    var callSpan = Expression.Call(methodSpan, property);
+        //    var writer = Expression.Parameter(typeof(IBufferWriter<byte>), "writer");
+        //    var ps = new Expression[] { callSpan, writer };
+
+        //    var call = Expression.Call(method, ps);
+        //    var lambda = Expression.Lambda(call, target, writer);
+        //    return (Func<object, IBufferWriter<byte>, long>)lambda.Compile();
+        //}
+
         static Func<object, IBufferWriter<byte>, long> GenerateSupported(this PropertyInfo propertyInfo)
         {
-            if (propertyInfo.PropertyType.IsGenericType)
-                return (o, v) => Formatter.WriteEmpty(v);
-
             var method = typeof(Formatter).GetMethod("Serialize", new Type[] { propertyInfo.PropertyType, typeof(IBufferWriter<byte>) });
             if (method == null)
                 return (o, v) => Formatter.WriteEmpty(v);
@@ -60,9 +81,6 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
 
         static Func<object, IBufferWriter<byte>, long> GenerateObject(this PropertyInfo propertyInfo)
         {
-            if (propertyInfo.PropertyType.IsGenericType)
-                return (o, v) => Formatter.WriteEmpty(v);
-
             var method = typeof(Formatter).GetMethod("Serialize", new Type[] { _objectType, typeof(IBufferWriter<byte>) });
             if (method == null)
                 return (o, v) => Formatter.WriteEmpty(v);
