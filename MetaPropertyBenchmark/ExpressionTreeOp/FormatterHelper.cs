@@ -42,18 +42,18 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp
         {
             if (propertyInfo.PropertyType.IsGenericType)
                 return (o, v) => Formatter.WriteEmpty(v);
-            // Func<object, long> getCategoryId = (i,writer) => Formatter.Serialize((i as T).CategoryId, writer);
-            var instanceObj = Expression.Parameter(_objectType, "i");
-            var instance = Expression.Convert(instanceObj, propertyInfo.DeclaringType);
+
+            var target = Expression.Parameter(typeof(object), "i");
+            var instance = Expression.Convert(target, propertyInfo.DeclaringType);
+            var property = Expression.PropertyOrField(instance, propertyInfo.Name);
             var writer = Expression.Parameter(typeof(IBufferWriter<byte>), "writer");
-            var property = Expression.Property(instance, propertyInfo);
             var ps = new Expression[] { property, writer };
             var method = typeof(Formatter).GetMethod("Serialize", new Type[] { propertyInfo.PropertyType, typeof(IBufferWriter<byte>) });
             if (method == null)
                 return (o, v) => Formatter.WriteEmpty(v);
 
             var call = Expression.Call(method, ps);
-            var lambda = Expression.Lambda(call, instanceObj, writer);
+            var lambda = Expression.Lambda(call, target, writer);
             return (Func<object, IBufferWriter<byte>, long>)lambda.Compile();
         }
 
