@@ -29,7 +29,7 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp2
 
         public static Func<object, IBufferWriter<byte>, long> GenerateFormatter(this PropertyInfo propertyInfo)
         {
-            if (propertyInfo.PropertyType.IsGenericType)
+            if (propertyInfo.PropertyType.IsGenericType || propertyInfo.DeclaringType == null)
                 return (o, w) => FormatterExtention.SerializeNone(o, w);
 
             var method = _this.GetMethod("Serialize",

@@ -22,6 +22,7 @@ namespace MetaPropertyBenchmark
         readonly MetaPropertyBenchmark.ExpressionTree.Builder _builderExp = new();
         readonly MetaPropertyBenchmark.ExpressionTreeOp.Builder _builderExpOp = new();
         readonly MetaPropertyBenchmark.ExpressionTreeOp2.Builder _builderExpOp2 = new();
+        readonly MetaPropertyBenchmark.ExpressionTreeOp3.Builder _builderExpOp3 = new();
 
         public Benchmark()
         {
@@ -41,6 +42,7 @@ namespace MetaPropertyBenchmark
             //_builderExp.Compile<User>();
             //_builderExpOp.Compile<User>();
             //_builderExpOp2.Compile<User>();
+            //_builderExpOp3.Compile<User>();
 
             Randomizer.Seed = new Random(8675309);
 
@@ -129,6 +131,15 @@ namespace MetaPropertyBenchmark
 
             using var stream = CreateStream(Path.Combine(_workPath, "ExpressionTreeOp2.txt"));
             _builderExpOp2.Run(stream, _users);
+        }
+        [Benchmark]
+        public void ExpressionTreeOp3()
+        {
+            if (_users == null)
+                throw new ApplicationException("users is null");
+
+            using var stream = CreateStream(Path.Combine(_workPath, "ExpressionTreeOp3.txt"));
+            _builderExpOp3.Run(stream, _users);
         }
     }
 }
