@@ -8,26 +8,28 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp2
         static Formatter()
         {
             var t = typeof(T);
-            if (t.IsGenericType) Serialize = FormatterExtention.SerializeNone;
-            else if (t == typeof(string)) Serialize = FormatterExtention.SerializeString;
-            else if (t == typeof(DateTime)) Serialize = FormatterExtention.SerializeDate;
-            else if (t == typeof(int)) Serialize = FormatterExtention.SerializeNumber;
-            else if (t == typeof(uint)) Serialize = FormatterExtention.SerializeNumber;
-            else if (t == typeof(short)) Serialize = FormatterExtention.SerializeNumber;
-            else if (t == typeof(sbyte)) Serialize = FormatterExtention.SerializeNumber;
-            else if (t == typeof(byte)) Serialize = FormatterExtention.SerializeNumber;
-            else if (t == typeof(ushort)) Serialize = FormatterExtention.SerializeNumber;
-            else if (t == typeof(uint)) Serialize = FormatterExtention.SerializeNumber;
-            else if (t == typeof(long)) Serialize = FormatterExtention.SerializeNumber;
-            else if (t == typeof(ulong)) Serialize = FormatterExtention.SerializeNumber;
-            else if (t == typeof(nint)) Serialize = FormatterExtention.SerializeNumber;
-            else if (t == typeof(nuint)) Serialize = FormatterExtention.SerializeNumber;
-            else if (t == typeof(DateOnly)) Serialize = FormatterExtention.SerializeDate;
-            else if (t == typeof(TimeOnly)) Serialize = FormatterExtention.SerializeDate;
-            else if (t == typeof(bool)) Serialize = FormatterExtention.SerializeBoolean;
-            else Serialize = FormatterExtention.SerializeString;
+            if (t.IsGenericType) Serializer = FormatterExtention.SerializeNone;
+            else if (t == typeof(string)) Serializer = FormatterExtention.SerializeString;
+            else if (t == typeof(DateTime)) Serializer = FormatterExtention.SerializeDate;
+            else if (t == typeof(int)) Serializer = FormatterExtention.SerializeNumber;
+            else if (t == typeof(uint)) Serializer = FormatterExtention.SerializeNumber;
+            else if (t == typeof(short)) Serializer = FormatterExtention.SerializeNumber;
+            else if (t == typeof(sbyte)) Serializer = FormatterExtention.SerializeNumber;
+            else if (t == typeof(byte)) Serializer = FormatterExtention.SerializeNumber;
+            else if (t == typeof(ushort)) Serializer = FormatterExtention.SerializeNumber;
+            else if (t == typeof(uint)) Serializer = FormatterExtention.SerializeNumber;
+            else if (t == typeof(long)) Serializer = FormatterExtention.SerializeNumber;
+            else if (t == typeof(ulong)) Serializer = FormatterExtention.SerializeNumber;
+            else if (t == typeof(nint)) Serializer = FormatterExtention.SerializeNumber;
+            else if (t == typeof(nuint)) Serializer = FormatterExtention.SerializeNumber;
+            else if (t == typeof(DateOnly)) Serializer = FormatterExtention.SerializeDate;
+            else if (t == typeof(TimeOnly)) Serializer = FormatterExtention.SerializeDate;
+            else if (t == typeof(bool)) Serializer = FormatterExtention.SerializeBoolean;
+            else Serializer = FormatterExtention.SerializeString;
         }
-        public static readonly Func<T, IBufferWriter<byte>, long> Serialize;
+        public static readonly Func<T, IBufferWriter<byte>, long> Serializer;
+        public static long Serialize<T>(T value, IBufferWriter<byte> writer)
+            => Formatter<T>.Serializer(value, writer);
     }
 
     public static class FormatterExtention
