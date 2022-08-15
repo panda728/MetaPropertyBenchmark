@@ -15,9 +15,10 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp3
 
         public int Index { get; init; }
         public string Name { get; init; }
-        public Func<T, IBufferWriter<byte>, long> Formatter { get; init; }
+        public SerializeDelegate<T> Formatter { get; init; }
     }
 
+    public delegate long SerializeDelegate<T>(T value, ref IBufferWriter<byte> writer);
     public static class FormatterHelperExtention
     {
         readonly static Type _objectType = typeof(object);
@@ -29,12 +30,12 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp3
                 .ToArray();
 
         readonly static MethodInfo _methodObject = _methods.Where(x => x.type == typeof(object)).First().method;
-        readonly static ParameterExpression _writer = Expression.Parameter(typeof(IBufferWriter<byte>), "w");
+        readonly static ParameterExpression _writer = Expression.Parameter(typeof(IBufferWriter<byte>).MakeByRefType(), "w");
 
-        public static Func<T, IBufferWriter<byte>, long> GenerateFormatter<T>(this PropertyInfo p)
+        public static SerializeDelegate<T> GenerateFormatter<T>(this PropertyInfo p)
         {
             if (p.DeclaringType == null || p.PropertyType.IsGenericType)
-                return (o, v) => Formatter.WriteEmpty(v);
+                return (T value, ref IBufferWriter<byte> writer) => Formatter.WriteEmpty(ref writer);
 
             var methodTyped = _methods.Where(x => x.type == p.PropertyType)?.Select(x => x.method)?.FirstOrDefault();
             var target = Expression.Parameter(p.DeclaringType, "i");
@@ -43,9 +44,8 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp3
                 : new Expression[] { Expression.PropertyOrField(target, p.Name), _writer };
 
             var call = Expression.Call(methodTyped ?? _methodObject, parameters);
-            var lambda = Expression.Lambda(call, target, _writer);
-            return (Func<T, IBufferWriter<byte>, long>)lambda.Compile();
-
+            var lambda = Expression.Lambda<SerializeDelegate<T>>(call, target, _writer);
+            return lambda.Compile();
         }
     }
 }

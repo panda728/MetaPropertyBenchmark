@@ -35,41 +35,41 @@ namespace MetaPropertyBenchmark.ExpressionTreeOp3
         public void Run<T>(Stream stream, IEnumerable<T> rows)
         {
             var properties = GetPropertiesCache<T>.Properties.AsSpan();
-            using var writer = new ArrayPoolBufferWriter();
-
-            WriteLine("<body>", writer);
-            writer.CopyTo(stream);
+            using var buffer = new ArrayPoolBufferWriter();
+            var writer = (IBufferWriter<byte>)buffer;
+            WriteLine("<body>", buffer);
+            buffer.CopyTo(stream);
             foreach (var row in rows)
             {
-                Write(_rowTag1, writer);
+                Write(_rowTag1, buffer);
                 foreach (var p in properties)
                 {
-                    p.Formatter(row, writer);
-                    writer.CopyTo(stream);
+                    p.Formatter(row, ref writer);
+                    buffer.CopyTo(stream);
                 }
 
-                WriteLine(_rowTag2, writer);
-                writer.CopyTo(stream);
+                WriteLine(_rowTag2, buffer);
+                buffer.CopyTo(stream);
             }
-            WriteLine("</body>", writer);
-            writer.CopyTo(stream);
+            WriteLine("</body>", buffer);
+            buffer.CopyTo(stream);
         }
 
-        void WriteLine(ReadOnlySpan<char> chars, IBufferWriter<byte> writer)
+        void WriteLine(ReadOnlySpan<char> chars, IBufferWriter<byte> buffer)
         {
-            Encoding.UTF8.GetBytes(chars, writer);
-            writer.Write(_newLine);
+            Encoding.UTF8.GetBytes(chars, buffer);
+            buffer.Write(_newLine);
         }
 
-        void Write(byte[] bytes, IBufferWriter<byte> writer)
+        void Write(byte[] bytes, IBufferWriter<byte> buffer)
         {
-            writer.Write(bytes);
+            buffer.Write(bytes);
         }
 
-        void WriteLine(byte[] bytes, IBufferWriter<byte> writer)
+        void WriteLine(byte[] bytes, IBufferWriter<byte> buffer)
         {
-            writer.Write(bytes);
-            writer.Write(_newLine);
+            buffer.Write(bytes);
+            buffer.Write(_newLine);
         }
     }
 }
